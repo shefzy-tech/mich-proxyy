@@ -9,9 +9,9 @@ app.use(cors());
 app.use(express.json());
 
 // Your bot server (HTTP)
-const BACKEND_URL = 'https://ambassador.seyori.name.ng:2008';
+const BACKEND_URL = 'http://217.76.60.236:2008';
 
-// Forward all requests
+// Forward all requests 
 app.all('*', async (req, res) => {
   const targetUrl = BACKEND_URL + req.url;
 
