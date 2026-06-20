@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.json());
 
 // YOUR BOT SERVER IP - MAKE SURE THIS IS EXACTLY CORRECT
-const BACKEND_URL = 'http://217.76.60.236:2008';  // NO trailing slash!
+const BACKEND_URL = 'https://217.76.60.236:2008';  // NO trailing slash!
 
 // Forward all requests 
 app.all('*', async (req, res) => {
