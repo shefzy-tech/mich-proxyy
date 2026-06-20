@@ -3,46 +3,70 @@ const cors = require('cors');
 const fetch = require('node-fetch');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
 app.use(cors());
 app.use(express.json());
 
-// Your bot server (HTTP)
-const BACKEND_URL = 'http://217.76.60.236:2008/';
+// YOUR BOT SERVER IP - MAKE SURE THIS IS EXACTLY CORRECT
+const BACKEND_URL = 'http://217.76.60.236:2008';  // NO trailing slash!
 
 // Forward all requests 
 app.all('*', async (req, res) => {
-  const targetUrl = BACKEND_URL + req.url;
+  // Remove trailing slashes to avoid double slash issues
+  const cleanUrl = req.url.startsWith('/') ? req.url.slice(1) : req.url;
+  const targetUrl = `${BACKEND_URL}/${cleanUrl}`;
+  
+  // Handle root path
+  const finalUrl = targetUrl.endsWith('/') ? targetUrl.slice(0, -1) : targetUrl;
 
+  // Clean up headers
   const headers = { ...req.headers };
   delete headers.host;
   delete headers['x-forwarded-for'];
   delete headers['x-forwarded-proto'];
-  delete headers['accept-encoding'];  // optional, can cause issues
+  delete headers['accept-encoding'];
+  delete headers['content-length'];  // Let fetch handle this
 
   try {
-    const response = await fetch(targetUrl, {
+    console.log(`[PROXY] ${req.method} -> ${finalUrl}`);
+    
+    const fetchOptions = {
       method: req.method,
       headers: headers,
-      body: ['GET', 'HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body),
-    });
+      timeout: 30000
+    };
+
+    // Only add body for methods that support it
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method.toUpperCase())) {
+      fetchOptions.body = JSON.stringify(req.body);
+    }
+
+    const response = await fetch(finalUrl, fetchOptions);
 
     const contentType = response.headers.get('content-type');
     let data;
+    
     if (contentType && contentType.includes('application/json')) {
       data = await response.json();
     } else {
       data = await response.text();
     }
 
+    // Forward the response
     res.status(response.status).send(data);
+    
   } catch (err) {
-    console.error('Proxy error:', err.message);
-    res.status(502).json({ error: 'Backend unreachable', details: err.message });
+    console.error('[PROXY] Error:', err.message);
+    res.status(502).json({ 
+      error: 'Backend unreachable', 
+      details: err.message,
+      target: finalUrl
+    });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Proxy running on port ${PORT}`);
+  console.log(`✅ Proxy running on port ${PORT}`);
+  console.log(`🔄 Forwarding to: ${BACKEND_URL}`);
 });
