@@ -10,7 +10,7 @@ app.use(express.json());
 
 // YOUR BOT SERVER IP - MAKE SURE THIS IS EXACTLY CORRECT
 //const BACKEND_URL = 'http://xnuell.duckdns.org:1906'; 
-const BACKEND_URL = 'https://michikowebsite-production-c68a.up.railway.app';
+const BACKEND_URL = 'https://michikowebsite-production-6367.up.railway.app';
 
 // Forward all requests 
 app.all('*', async (req, res) => {
